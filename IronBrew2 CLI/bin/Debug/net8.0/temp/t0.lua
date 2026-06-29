@@ -1,21 +1,6 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Script started initialization")
 local now = tick()
-getfenv()["pr" .. "int"](string.format("[Anime Squadron ASMain] _G.UILoaded: %s | Time diff: %s", tostring(_G.UILoaded), tostring(now - (_G.LastUILoadTime or 0))))
 if _G.UILoaded and (now - (_G.LastUILoadTime or 0)) < 5 then
-    getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Returning early due to UILoaded throttle")
     return
 end
 
@@ -33,9 +18,7 @@ end
 getgenv().isStartup = true
 
 local repo = "https://raw.githubusercontent.com/nostrainu/ObsidianFork/main/"
-getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Fetching and loading Library.lua...")
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Library.lua loaded successfully.")
 local folder, path = "bobcat", "bobcat/games/AS/config.json"
 
 getgenv().Library = Library
@@ -50,7 +33,6 @@ if not Macro then
     error("[Anime Squadron] ASFunc.lua failed to load before ASMain.lua")
 end
 
-getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Creating Loading UI...")
 local Loading = Library:CreateLoading({
     Title = "Poop-Cat",
     Icon = "loader-2",
@@ -60,10 +42,9 @@ local Loading = Library:CreateLoading({
 })
 
 
-getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Initializing Window Setup...")
 local Window = Library:CreateWindow({
     Title = "Pop-cat",
-    Footer = "https://discord.gg/avPyBbTf",
+    Footer = "Anime Squadron",
     MobileButtonsSide = "Left",
     ShowMobileButtons = true,
     NotifySide = "Right",
@@ -88,6 +69,12 @@ local Tabs = {
     Macro = Window:AddTab("Macro", "video"),
 
     
+    
+
+    
+    Rotation = Window:AddTab("Map Rotation", "refresh-cw"),
+
+    
     Misc = Window:AddTab("Miscellaneous", "book"),
 
     
@@ -96,7 +83,7 @@ local Tabs = {
 
 
 local MainGroupBox = Tabs.Main:AddLeftGroupbox({
-    Name = "Story",
+    Name = "Join Room",
     Center = true,
     Collapsible = true,
     DefaultCollapsed = false
@@ -105,16 +92,23 @@ local MainGroupBox = Tabs.Main:AddLeftGroupbox({
 local findWorldsModule = getgenv().findWorldsModule
 local updateMapModeLevelDropdowns = getgenv().updateMapModeLevelDropdowns
 
-local mapValues = getgenv().initialMapValues or {"GT City", "Marine Lobby", "Ninja Village", "Katakura Wasteland"}
+local mapValues = getgenv().initialMapValues or {"GT City", "Marine Lobby", "Ninja Village", "Katakura Wasteland", "Eclipse (Before)", "Katakara Bridge"}
 local modeValues = getgenv().initialModeValues or {"Story", "Squadron", "Raid"}
 local difficultyValues = getgenv().initialDifficultyValues or {"Normal", "Hard"}
 local levelValues = getgenv().initialLevelValues or {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
+local webhookItemValues = getgenv().initialWebhookItems or {
+    "Yen", "Gems", "Perfect Cubes", "Reroll Cubes", "Trait Shards",
+    "Beastblood Catalyst", "Binding Cloth", "Bounty Tickets", "Chakra Fragment",
+    "Currentbinder Rope", "Depthglass Bottle", "Eclipse Godstone", "Fuin Script Paper",
+    "Genjutsu Fog Vial", "Hogyoku", "Ki Resonant Crystal", "Limitbreak Obsidian",
+    "Meat", "Narutomaki", "Ninja Headband", "Omega Chest", "Omega Coins"
+}
 
 MainGroupBox:AddDropdown("SelectedMap", {
     Text = "Select Map",
     Values = mapValues,
     Multi = false,
-    Default = registerSetting("SelectedMap", "Ninja Village"),
+    Default = registerSetting("SelectedMap"),
     Callback = function(val)
         setConfig("SelectedMap", val)
         updateMapModeLevelDropdowns()
@@ -125,7 +119,7 @@ MainGroupBox:AddDropdown("SelectedMode", {
     Text = "Select Mode",
     Values = modeValues,
     Multi = false,
-    Default = registerSetting("SelectedMode", "Story"),
+    Default = registerSetting("SelectedMode"),
     Callback = function(val)
         setConfig("SelectedMode", val)
         updateMapModeLevelDropdowns()
@@ -136,7 +130,7 @@ MainGroupBox:AddDropdown("SelectedDifficulty", {
     Text = "Select Difficulty",
     Values = difficultyValues,
     Multi = false,
-    Default = registerSetting("SelectedDifficulty", "Normal"),
+    Default = registerSetting("SelectedDifficulty"),
     Callback = function(val)
         setConfig("SelectedDifficulty", val)
         updateMapModeLevelDropdowns()
@@ -147,7 +141,7 @@ MainGroupBox:AddDropdown("SelectedLevel", {
     Text = "Select Level",
     Values = levelValues,
     Multi = false,
-    Default = registerSetting("SelectedLevel", "1"),
+    Default = registerSetting("SelectedLevel"),
     Callback = function(val)
         setConfig("SelectedLevel", val)
         updateMapModeLevelDropdowns()
@@ -173,6 +167,9 @@ MainGroupBox:AddToggle("AutoJoin", {
         if val then
             setConfig("AutoChallenge", false)
             setConfig("AutoRaid", false)
+            if Library.Toggles.MapRotation then
+                Library.Toggles.MapRotation:SetValue(false)
+            end
             SyncUI()
         end
     end
@@ -190,10 +187,18 @@ getgenv().ChallengeInfoLabel = ChallengeInfoLabel
 
 ChallengeGroupBox:AddDropdown("ChallengeType", {
     Text = "Challenge Type",
-    Values = {"30m", "1d"},
+    Values = {"30m", "1d", "Katakara Bridge"},
     Multi = true,
-    Default = registerSetting("ChallengeType", { ["30m"] = true, ["1d"] = true }),
+    Default = registerSetting("ChallengeType", { ["30m"] = true, ["1d"] = true, ["Katakara Bridge"] = true }),
     Callback = function(val) setConfig("ChallengeType", val) end
+})
+
+ChallengeGroupBox:AddDropdown("ChallengeRewardFilter", {
+    Text = "Required Reward Filter",
+    Values = {"Trait Shards", "Perfect Cubes", "Reroll Cubes", "Gems"},
+    Multi = true,
+    Default = registerSetting("ChallengeRewardFilter", {}),
+    Callback = function(val) setConfig("ChallengeRewardFilter", val) end
 })
 
 ChallengeGroupBox:AddSlider("ChallengeDelay", {
@@ -213,43 +218,9 @@ ChallengeGroupBox:AddToggle("AutoChallenge", {
         if val then
             setConfig("AutoJoin", false)
             setConfig("AutoRaid", false)
-            SyncUI()
-        end
-    end
-})
-
-local RaidGroupBox = Tabs.Main:AddLeftGroupbox({
-    Name = "Raid",
-    Center = true,
-    Collapsible = true,
-    DefaultCollapsed = false
-})
-
-RaidGroupBox:AddDropdown("SelectedRaidAct", {
-    Text = "Select Raid Boss",
-    Values = {"Super Beby 2", "Super Android", "Shanron", "Shanron (Omega)"},
-    Multi = false,
-    Default = registerSetting("SelectedRaidAct", "Shanron"),
-    Callback = function(val) setConfig("SelectedRaidAct", val) end
-})
-
-RaidGroupBox:AddSlider("RaidDelay", {
-    Text = "Raid Join Delay",
-    Default = registerSetting("RaidDelay", 3),
-    Min = 1, Max = 15, Rounding = 0,
-    Suffix = "s",
-    Callback = function(val) setConfig("RaidDelay", val) end
-})
-
-RaidGroupBox:AddToggle("AutoRaid", {
-    Text = "Auto Raid",
-    Default = registerSetting("AutoRaid", false),
-    Callback = function(val)
-        if getgenv().updatingUI then return end
-        setConfig("AutoRaid", val)
-        if val then
-            setConfig("AutoJoin", false)
-            setConfig("AutoChallenge", false)
+            if Library.Toggles.MapRotation then
+                Library.Toggles.MapRotation:SetValue(false)
+            end
             SyncUI()
         end
     end
@@ -285,76 +256,171 @@ MiscGroupBox:AddToggle("AutoSummon", {
     Callback = function(val) setConfig("AutoSummon", val) end
 })
 
-local PriorityGroupBox = Tabs.Misc:AddRightGroupbox({
-    Name = "Autoplay Priority Settings",
-    Center = true,
+MiscGroupBox:AddDivider()
+
+MiscGroupBox:AddToggle("AutoRedeemCodes", {
+    Text = "Auto Redeem Codes",
+    Default = registerSetting("AutoRedeemCodes", false),
+    Callback = function(val)
+        setConfig("AutoRedeemCodes", val)
+    end
+})
+
+local MapRotationTabbox = Tabs.Rotation:AddMiddleTabbox({
+    Name = "Map Rotation",
     Collapsible = true,
+    Center = true,
     DefaultCollapsed = false
 })
 
-PriorityGroupBox:AddToggle("PriorityCycling", {
-    Text = "Enable Priority Cycling",
-    Default = registerSetting("PriorityCycling", false),
+local MapSettings = MapRotationTabbox:AddTab("Map Priority")
+local MapTab = MapRotationTabbox:AddTab("Map Selection")
+
+local function updatePriorityMapDropdown(i)
+    local modeOption = Library.Options["Priority" .. i]
+    local mapOption = Library.Options["Priority" .. i .. "Map"]
+    if not modeOption or not mapOption then return end
+
+    local currentMode = modeOption.Value
+    local currentMap = mapOption.Value
+
+    local allowedMaps = getMapsForMode(currentMode)
+    mapOption:SetValues(allowedMaps)
+
+    if not table.find(allowedMaps, currentMap) then
+        local newMap = allowedMaps[1] or ""
+        mapOption:SetValue(newMap)
+        setConfig("Priority" .. i .. "Map", newMap)
+    end
+end
+
+MapSettings:AddDropdown("Priority1", {
+    Text = "Priority 1",
+    Values = {"None", "Story", "Squadron", "Raid"},
+    Default = registerSetting("Priority1", "Story"),
     Callback = function(val)
         if getgenv().updatingUI then return end
-        setConfig("PriorityCycling", val)
-        if val then
-            if not getgenv().isStartup then
-                getgenv().CurrentPriorityIndex = 1
-                setConfig("CurrentPriorityIndex", 1)
-                getgenv().CurrentModeRuns = 0
-                setConfig("CurrentModeRuns", 0)
-            end
-            if getgenv().initPriorityCycling then
-                getgenv().initPriorityCycling()
-            end
-        end
-    end
-})
-
-PriorityGroupBox:AddDropdown("Priority1", {
-    Text = "Priority 1",
-    Values = {"None", "Challenge", "Story", "Squadron", "Raid"},
-    Default = registerSetting("Priority1", "Challenge"),
-    Callback = function(val)
         setConfig("Priority1", val)
-        if getgenv().config.PriorityCycling and getgenv().initPriorityCycling then
-            getgenv().initPriorityCycling()
+        updatePriorityMapDropdown(1)
+        if getgenv().config.MapRotation and getgenv().initMapRotation then
+            getgenv().initMapRotation()
         end
     end
 })
 
-PriorityGroupBox:AddDropdown("Priority2", {
+MapSettings:AddDropdown("Priority2", {
     Text = "Priority 2",
-    Values = {"None", "Challenge", "Story", "Squadron", "Raid"},
+    Values = {"None", "Story", "Squadron", "Raid"},
     Default = registerSetting("Priority2", "Story"),
     Callback = function(val)
+        if getgenv().updatingUI then return end
         setConfig("Priority2", val)
-        if getgenv().config.PriorityCycling and getgenv().initPriorityCycling then
-            getgenv().initPriorityCycling()
+        updatePriorityMapDropdown(2)
+        if getgenv().config.MapRotation and getgenv().initMapRotation then
+            getgenv().initMapRotation()
         end
     end
 })
 
-PriorityGroupBox:AddDropdown("Priority3", {
+MapSettings:AddDropdown("Priority3", {
     Text = "Priority 3",
-    Values = {"None", "Challenge", "Story", "Squadron", "Raid"},
+    Values = {"None", "Story", "Squadron", "Raid"},
     Default = registerSetting("Priority3", "Squadron"),
     Callback = function(val)
+        if getgenv().updatingUI then return end
         setConfig("Priority3", val)
-        if getgenv().config.PriorityCycling and getgenv().initPriorityCycling then
-            getgenv().initPriorityCycling()
+        updatePriorityMapDropdown(3)
+        if getgenv().config.MapRotation and getgenv().initMapRotation then
+            getgenv().initMapRotation()
         end
     end
 })
 
-PriorityGroupBox:AddSlider("PriorityRunsLimit", {
+MapSettings:AddSlider("PriorityRunsLimit", {
     Text = "Runs Per Mode",
     Default = registerSetting("PriorityRunsLimit", 5),
     Min = 1, Max = 50, Rounding = 0,
     Suffix = " run(s)",
     Callback = function(val) setConfig("PriorityRunsLimit", val) end
 })
+
+MapSettings:AddSlider("PriorityJoinDelay", {
+    Text = "Cycle Join Delay",
+    Default = registerSetting("PriorityJoinDelay", 5),
+    Min = 1, Max = 15, Rounding = 0,
+    Suffix = "s",
+    Callback = function(val) setConfig("PriorityJoinDelay", val) end
+})
+
+MapSettings:AddToggle("MapRotation", {
+    Text = "Auto Map Rotation",
+    Default = registerSetting("MapRotation", false),
+    Callback = function(val)
+        if getgenv().updatingUI then return end
+        setConfig("MapRotation", val)
+        if val then
+            if not getgenv().isStartup then
+                getgenv().CurrentPriorityIndex = 1
+                setConfig("CurrentPriorityIndex", 1)
+                getgenv().CurrentModeRuns = 0
+                setConfig("CurrentModeRuns", 0)
+                getgenv().SessionRuns = 0
+            end
+            if Library.Toggles.AutoJoin then
+                Library.Toggles.AutoJoin:SetValue(false)
+            else
+                setConfig("AutoJoin", false)
+            end
+            if Library.Toggles.AutoChallenge then
+                Library.Toggles.AutoChallenge:SetValue(false)
+            else
+                setConfig("AutoChallenge", false)
+            end
+            setConfig("AutoRaid", false)
+            if getgenv().initMapRotation then
+                getgenv().initMapRotation()
+            end
+        else
+            if getgenv().initMapRotation then
+                getgenv().initMapRotation()
+            end
+        end
+        if getgenv().SyncUI then
+            getgenv().SyncUI()
+        end
+    end
+})
+
+for i = 1, 3 do
+    MapTab:AddLabel({ Text = "Priority " .. i .. " Settings", DoesWrap = true })
+    MapTab:AddDropdown("Priority" .. i .. "Map", {
+        Text = "Map",
+        Values = mapValues,
+        Default = registerSetting("Priority" .. i .. "Map", "GT City"),
+        Callback = function(val) setConfig("Priority" .. i .. "Map", val) end
+    })
+    MapTab:AddDropdown("Priority" .. i .. "Difficulty", {
+        Text = "Difficulty",
+        Values = difficultyValues,
+        Default = registerSetting("Priority" .. i .. "Difficulty", "Normal"),
+        Callback = function(val) setConfig("Priority" .. i .. "Difficulty", val) end
+    })
+    MapTab:AddDropdown("Priority" .. i .. "Level", {
+        Text = "Level",
+        Values = levelValues,
+        Default = registerSetting("Priority" .. i .. "Level", "1"),
+        Callback = function(val) setConfig("Priority" .. i .. "Level", val) end
+    })
+
+    if i < 3 then
+        MapTab:AddDivider()
+    end
+
+    task.spawn(function()
+        task.wait(0.2)
+        updatePriorityMapDropdown(i)
+    end)
+end
 
 local WebhookGroupBox = Tabs.Webhook:AddLeftGroupbox({
     Name = "Webhook Settings",
@@ -367,7 +433,6 @@ WebhookGroupBox:AddInput("WebhookURL", {
     Text = "Webhook URL",
     Default = registerSetting("WebhookURL", ""),
     Placeholder = "Enter Discord Webhook URL...",
-    Finished = true,
     Callback = function(val) setConfig("WebhookURL", val) end
 })
 
@@ -387,8 +452,15 @@ WebhookGroupBox:AddInput("DiscordUserID", {
     Text = "Discord User ID",
     Default = registerSetting("DiscordUserID", ""),
     Placeholder = "Enter Discord User ID for pings...",
-    Finished = true,
     Callback = function(val) setConfig("DiscordUserID", val) end
+})
+
+WebhookGroupBox:AddDropdown("WebhookItems", {
+    Text = "Show Items in Webhook",
+    Values = webhookItemValues,
+    Multi = true,
+    Default = registerSetting("WebhookItems", { ["Yen"] = true, ["Gems"] = true, ["Perfect Cubes"] = true, ["Reroll Cubes"] = true }),
+    Callback = function(val) setConfig("WebhookItems", val) end
 })
 
 WebhookGroupBox:AddButton("Test Webhook", function()
@@ -398,13 +470,41 @@ WebhookGroupBox:AddButton("Test Webhook", function()
         return
     end
     
+    local fields = { { name = "Status", value = "Online / Working", inline = true } }
+    pcall(function()
+        local getInventoryTotal = getgenv().getInventoryTotal
+        local formatNumber = getgenv().formatNumber
+        if getInventoryTotal and formatNumber then
+            local selected = getgenv().config and getgenv().config.WebhookItems or { ["Yen"] = true, ["Gems"] = true, ["Perfect Cubes"] = true, ["Reroll Cubes"] = true }
+            local order = getgenv().initialWebhookItems or { "Yen", "Gems", "Perfect Cubes", "Reroll Cubes", "Trait Shards" }
+            local statsList = {}
+            local processed = {}
+            for _, name in ipairs(order) do
+                processed[name] = true
+                if selected[name] then
+                    local val = getInventoryTotal(name) or 0
+                    table.insert(statsList, string.format("- **%s:** %s", name, formatNumber(val)))
+                end
+            end
+            for name, isSelected in pairs(selected) do
+                if isSelected and not processed[name] then
+                    local val = getInventoryTotal(name) or 0
+                    table.insert(statsList, string.format("- **%s:** %s", name, formatNumber(val)))
+                end
+            end
+            if #statsList > 0 then
+                table.insert(fields, { name = "Player Data (Selected)", value = table.concat(statsList, "\n"), inline = false })
+            end
+        end
+    end)
+    
     pcall(function()
         local getgenv = getgenv
         if getgenv().sendDiscordWebhook then
             getgenv().sendDiscordWebhook(
                 "Test Webhook",
                 "Your Anime Squadron script webhook is configured correctly!",
-                { { name = "Status", value = "Online / Working", inline = true } }
+                fields
             )
             Library:Notify("Test Webhook sent!", 3)
         else
@@ -507,6 +607,9 @@ RecorderBox:AddToggle("MacroPlay", {
     Callback = function(val)
         setConfig("MacroPlay", val)
         if val then
+            if Library.Toggles.InfiniteAutoplay and Library.Toggles.InfiniteAutoplay.Value then
+                Library.Toggles.InfiniteAutoplay:SetValue(false)
+            end
             Macro.HasPlayedThisMatch = false
             if Library.Toggles.MacroRecord and Library.Toggles.MacroRecord.Value then
                 Library.Toggles.MacroRecord:SetValue(false)
@@ -553,6 +656,23 @@ RecorderBox:AddToggle("AutoReplay", {
     end
 })
 
+RecorderBox:AddToggle("AutoNext", {
+    Text = "Auto Next",
+    Default = registerSetting("AutoNext", false),
+    Callback = function(val)
+        setConfig("AutoNext", val)
+        if val then
+            local inLobby = getgenv().isInLobby and getgenv().isInLobby()
+            local isMid = getgenv().isMidGame and getgenv().isMidGame()
+            if not inLobby and isMid == false then
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Game"):WaitForChild("next"):FireServer()
+                end)
+            end
+        end
+    end
+})
+
 RecorderBox:AddDivider()
 
 RecorderBox:AddDropdown("AutoSpeed", {
@@ -589,7 +709,6 @@ MacroBox:AddInput("MacroName", {
     Text = "Macro Name",
     Default = "",
     Placeholder = "Enter name...",
-    Finished = true,
 })
 
 MacroBox:AddButton("Create Macro", function()
@@ -620,13 +739,11 @@ MacroBox:AddDropdown("MacroSelect", {
         setConfig("MacroSelect", val)
         if Macro:LoadMacro(val) then
             MacroStatus:Update({ State = "Loaded: " .. val .. " — " .. #Macro.Recording .. " steps" })
-            if not getgenv().isStartup and getgenv().config.AutoEquipUnits and val ~= "" and val ~= "---" then
+            if not getgenv().isStartup and getgenv().config.AutoEquipUnits and val ~= "" and val ~= "---" and (not getgenv().isInLobby or getgenv().isInLobby()) then
                 task.spawn(function()
                     local ok, msg = getgenv().equipMacroUnits(val)
-                    if ok then
+                    if ok and msg and msg ~= "" then
                         Library:Notify(msg, 5)
-                    else
-                        Library:Notify("Failed to equip: " .. tostring(msg), 5)
                     end
                 end)
             end
@@ -689,7 +806,6 @@ MacroBox:AddInput("ImportMacroData", {
     Text = "Import Macro (URL or JSON)",
     Default = "",
     Placeholder = "Paste raw JSON or Discord URL...",
-    Finished = true,
 })
 
 MacroBox:AddButton("Import Macro", function()
@@ -766,12 +882,64 @@ MacroBox:AddButton("Equip Macro Units", function()
     end
     
     local ok, msg = getgenv().equipMacroUnits(selected)
-    if ok then
+    if ok and msg and msg ~= "" then
         Library:Notify(msg, 5)
-    else
-        Library:Notify("Failed to equip: " .. tostring(msg), 5)
     end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Window:AddTabSection("Config")
@@ -795,6 +963,12 @@ SettingsGroup:AddToggle("DisableFloatingMenu", {
         setConfig("DisableFloatingMenu", val)
         Library.DisableFloatingMenu = val
     end
+})
+
+SettingsGroup:AddToggle("AutoReconnect", {
+    Text = "Auto Reconnect",
+    Default = registerSetting("AutoReconnect", false),
+    Callback = function(val) setConfig("AutoReconnect", val) end
 })
 
 SettingsGroup:AddToggle("AutoExecute", {
@@ -827,7 +1001,6 @@ InfoSubTab:AddLabel({ Text = "- Bug Fixes: Fixed macro deletion confirmation win
 SyncUI()
 updateMapModeLevelDropdowns()
 getgenv().isStartup = false
-getfenv()["pr" .. "int"]("[Anime Squadron ASMain] Finished executing script successfully.")
 
 Library:OnUnload(function()
     getgenv().uiActive = false

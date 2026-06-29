@@ -18,12 +18,12 @@ namespace IronBrew2.Obfuscator
 		{
 			EncryptStrings = false;
 			EncryptImportantStrings = false;
-			ControlFlow = true;
+			ControlFlow = false;
 			BytecodeCompress = true;
 			DecryptTableLen = 500;
 			PreserveLineInfo = false;
-			Mutate = true;
-			SuperOperators = true;
+			Mutate = false;
+			SuperOperators = false;
 			MaxMegaSuperOperators = 120;
 			MaxMiniSuperOperators = 120;
 			MaxMutations = 200;
